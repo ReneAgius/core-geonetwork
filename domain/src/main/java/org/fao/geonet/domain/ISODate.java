@@ -42,6 +42,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -61,7 +62,8 @@ import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 
 /**
  * Represents a date at a given time. Provides methods for representing the date as a string and
- * parsing from string. <p> String format is: yyyy-mm-ddThh:mm:ss </p>
+ * parsing from string.
+ * <p>String format is: {@code yyyy-mm-ddThh:mm:ss}.</p>
  */
 @Embeddable
 @XmlRootElement
@@ -122,7 +124,7 @@ public class ISODate implements Cloneable, Comparable<ISODate>, Serializable, Xm
      */
     public ISODate(final long timeInEpochMillis, final boolean shortDate) {
         Instant instantParam = Instant.ofEpochMilli(timeInEpochMillis);
-        internalDateTime = ZonedDateTime.ofInstant(instantParam, ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS);
+        internalDateTime = ZonedDateTime.ofInstant(instantParam, ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS);
         _shortDate = shortDate;
     }
 
@@ -478,7 +480,6 @@ public class ISODate implements Cloneable, Comparable<ISODate>, Serializable, Xm
     /**
      * Get the Time and Date encoded as a String.
      */
-
     @XmlValue
     public String getDateAndTime() {
         if (_shortDate || _shortDateYearMonth || _shortDateYear) {
@@ -641,7 +642,7 @@ public class ISODate implements Cloneable, Comparable<ISODate>, Serializable, Xm
         try {
             String[] parts = isoDate.split("[-/]");
             if ((parts.length == 0) || (parts.length > 3)) {
-                throw new IllegalArgumentException("Invalid ISO date : " + isoDate);
+                throw new IllegalArgumentException("Invalid ISO date: " + isoDate);
             }
 
             _shortDate = (parts.length == 3);
@@ -689,10 +690,10 @@ public class ISODate implements Cloneable, Comparable<ISODate>, Serializable, Xm
             int hour = 0;
             int minute = 0;
             int second = 0;
-            internalDateTime = ZonedDateTime.of(year, month, day, hour, minute, second, 0, ZoneOffset.UTC);
+            internalDateTime = ZonedDateTime.of(year, month, day, hour, minute, second, 0, ZoneOffset.systemDefault());
 
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid ISO date : " + isoDate, e);
+            throw new IllegalArgumentException("Invalid ISO date: " + isoDate, e);
         }
     }
 
@@ -700,7 +701,7 @@ public class ISODate implements Cloneable, Comparable<ISODate>, Serializable, Xm
         try {
             String[] parts = isoDate.split(":");
             if (parts.length == 1 || parts.length > 3) {
-                throw new IllegalArgumentException("Invalid ISO date : " + isoDate);
+                throw new IllegalArgumentException("Invalid ISO date: " + isoDate);
             }
 
             int hour = Integer.parseInt(parts[0]);
@@ -716,12 +717,15 @@ public class ISODate implements Cloneable, Comparable<ISODate>, Serializable, Xm
                 second = (int) Float.parseFloat(secondsToParse);
             }
 
+            if (internalDateTime == null) {
+                internalDateTime = ZonedDateTime.now();
+            }
             internalDateTime = internalDateTime.with(HOUR_OF_DAY, hour).with(MINUTE_OF_HOUR, minute).with(SECOND_OF_MINUTE, second)
                     .with(MILLI_OF_SECOND, 0).with(NANO_OF_SECOND, 0);
 
             _shortDate = false;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid ISO date : " + isoDate, e);
+            throw new IllegalArgumentException("Invalid ISO date: " + isoDate, e);
         }
     }
 
